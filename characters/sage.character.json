@@ -1,7 +1,7 @@
 {
     "name": "Sage",
     "plugins": [],
-    "clients": [],
+    "clients": ["twitter"],
     "modelProvider": "openai",
     "settings": {
         "secrets": {},
