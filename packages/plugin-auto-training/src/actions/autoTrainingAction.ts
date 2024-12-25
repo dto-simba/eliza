@@ -53,7 +53,7 @@ export const autoTrainingAction: Action = {
 
         elizaLogger.info(`Knowledge: ${knowledge}`);
 
-        const cleanData = await feedKnowledgeToLargeModel(knowledge, _runtime);
+        const fullData = await feedKnowledgeToLargeModel(knowledge, _runtime);
 
         const roomId = stringToUuid(
             "twitter_generate_room-sage"
@@ -73,7 +73,15 @@ export const autoTrainingAction: Action = {
                 twitterUserName: "sage",
             }
         );
-        await generateNewTweetContentExtra(cleanData, _runtime, state);
+       const newTweetContent = await generateNewTweetContentExtra(fullData, _runtime, state);
+
+        await _callback({text: `randomTopic: ${randomTopic}
+        ------------------------------------------------------------------
+         knowledge: ${knowledge}
+        ------------------------------------------------------------------
+         fullData: ${fullData}
+        ------------------------------------------------------------------
+         newTweetContent: ${newTweetContent}`});
 
         if (1 === 1) {
             return true;
