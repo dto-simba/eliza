@@ -1,4 +1,4 @@
-import { Tweet } from "agent-twitter-client";
+import {Tweet} from "agent-twitter-client";
 import {
     composeContext,
     generateText,
@@ -7,15 +7,19 @@ import {
     ModelClass,
     stringToUuid,
     parseBooleanFromText,
+    generateKeywordsBySearch,
+    generateSerperSearch,
+    feedKnowledgeToLargeModel,
+    generateNewTweetContentExtra,
 } from "@elizaos/core";
-import { elizaLogger } from "@elizaos/core";
-import { ClientBase } from "./base.ts";
-import { postActionResponseFooter } from "@elizaos/core";
-import { generateTweetActions } from "@elizaos/core";
-import { IImageDescriptionService, ServiceType } from "@elizaos/core";
-import { buildConversationThread } from "./utils.ts";
-import { twitterMessageHandlerTemplate } from "./interactions.ts";
-import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
+import {elizaLogger} from "@elizaos/core";
+import {ClientBase} from "./base.ts";
+import {postActionResponseFooter} from "@elizaos/core";
+import {generateTweetActions} from "@elizaos/core";
+import {IImageDescriptionService, ServiceType} from "@elizaos/core";
+import {buildConversationThread} from "./utils.ts";
+import {twitterMessageHandlerTemplate} from "./interactions.ts";
+import {DEFAULT_MAX_TWEET_LENGTH} from "./environment.ts";
 
 const twitterPostTemplate = `
 # Areas of Expertise
@@ -212,6 +216,13 @@ export class TwitterPostClient {
 
             const topics = this.runtime.character.topics.join(", ");
 
+            const randomTopic = await generateKeywordsBySearch(topics, this.runtime);
+
+            const knowledge = await generateSerperSearch(randomTopic + " last news", this.runtime);
+
+            const cleanData = await feedKnowledgeToLargeModel(knowledge, this.runtime);
+
+
             const state = await this.runtime.composeState(
                 {
                     userId: this.runtime.agentId,
@@ -227,22 +238,24 @@ export class TwitterPostClient {
                 }
             );
 
-            const context = composeContext({
-                state,
-                template:
-                    this.runtime.character.templates?.twitterPostTemplate ||
-                    twitterPostTemplate,
-            });
+            // const context = composeContext({
+            //     state,
+            //     template:
+            //         this.runtime.character.templates?.twitterPostTemplate ||
+            //         twitterPostTemplate,
+            // });
 
-            console.log("twitter context:\n" + context);
+            // console.log("twitter context:\n" + context);
 
-            elizaLogger.debug("generate post prompt:\n" + context);
+            // elizaLogger.debug("generate post prompt:\n" + context);
+            //
+            // const newTweetContent = await generateText({
+            //     runtime: this.runtime,
+            //     context,
+            //     modelClass: ModelClass.LARGE,
+            // });
 
-            const newTweetContent = await generateText({
-                runtime: this.runtime,
-                context,
-                modelClass: ModelClass.SMALL,
-            });
+            const newTweetContent = await generateNewTweetContentExtra(cleanData, this.runtime, state);
 
             // First attempt to clean content
             let cleanedContent = "";
@@ -281,7 +294,7 @@ export class TwitterPostClient {
             const content = truncateToCompleteSentence(
                 cleanedContent,
                 parseInt(this.runtime.getSetting("MAX_TWEET_LENGTH")) ||
-                    DEFAULT_MAX_TWEET_LENGTH
+                DEFAULT_MAX_TWEET_LENGTH
             );
 
             const removeQuotes = (str: string) =>
@@ -327,7 +340,7 @@ export class TwitterPostClient {
                     ).getTime(),
                     userId: this.client.profile.id,
                     inReplyToStatusId:
-                        tweetResult.legacy.in_reply_to_status_id_str,
+                    tweetResult.legacy.in_reply_to_status_id_str,
                     permanentUrl: `https://twitter.com/${this.twitterUsername}/status/${tweetResult.rest_id}`,
                     hashtags: [],
                     mentions: [],
@@ -492,7 +505,7 @@ export class TwitterPostClient {
                             userId: this.runtime.agentId,
                             roomId,
                             agentId: this.runtime.agentId,
-                            content: { text: "", action: "" },
+                            content: {text: "", action: ""},
                         },
                         {
                             twitterUserName: this.twitterUsername,
@@ -606,8 +619,8 @@ export class TwitterPostClient {
                                         userId: this.runtime.agentId,
                                         roomId: stringToUuid(
                                             tweet.conversationId +
-                                                "-" +
-                                                this.runtime.agentId
+                                            "-" +
+                                            this.runtime.agentId
                                         ),
                                         agentId: this.runtime.agentId,
                                         content: {
@@ -805,7 +818,7 @@ export class TwitterPostClient {
                         tweet.conversationId + "-" + this.runtime.agentId
                     ),
                     agentId: this.runtime.agentId,
-                    content: { text: tweet.text, action: "" },
+                    content: {text: tweet.text, action: ""},
                 },
                 {
                     twitterUserName: this.twitterUsername,

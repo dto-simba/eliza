@@ -62,7 +62,7 @@ export class TwitterSearchClient {
         this.engageWithSearchTerms();
         setTimeout(
             () => this.engageWithSearchTermsLoop(),
-            (Math.floor(Math.random() * (120 - 60 + 1)) + 60) * 60 * 1000
+            (Math.floor(Math.random() * (220 - 60 + 1)) + 60) * 60 * 1000
         );
     }
 
@@ -75,7 +75,7 @@ export class TwitterSearchClient {
 
             console.log("Fetching search tweets");
             // TODO: we wait 5 seconds here to avoid getting rate limited on startup, but we should queue
-            await new Promise((resolve) => setTimeout(resolve, 5000));
+            await new Promise((resolve) => setTimeout(resolve, 10000));
             const recentTweets = await this.client.fetchSearchTweets(
                 searchTerm,
                 20,

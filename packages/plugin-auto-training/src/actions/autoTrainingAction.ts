@@ -2,7 +2,20 @@ import {
     ActionExample,
     IAgentRuntime,
     Memory,
-    type Action, elizaLogger, SearchResponse, generateText, ModelClass, HandlerCallback, State, Content,
+    type Action,
+    elizaLogger,
+    SearchResponse,
+    generateText,
+    ModelClass,
+    HandlerCallback,
+    State,
+    Content,
+    generateSerperSearch,
+    composeContext,
+    generateKeywordsBySearch,
+    stringToUuid,
+    feedKnowledgeToLargeModel,
+    generateNewTweetContentExtra
 } from "@elizaos/core";
 
 export const autoTrainingAction: Action = {
@@ -27,11 +40,55 @@ export const autoTrainingAction: Action = {
         _options: any,
         _callback: HandlerCallback
     ): Promise<void> => {
+
+
+        const topics = _runtime.character.topics.join(", ");
+
+        const randomTopic = await generateKeywordsBySearch(topics, _runtime);
+
+        elizaLogger.info(`Random topic: ${randomTopic}`);
+
+
+        const knowledge = await generateSerperSearch(randomTopic + " last news", _runtime);
+
+        elizaLogger.info(`Knowledge: ${knowledge}`);
+
+        const cleanData = await feedKnowledgeToLargeModel(knowledge, _runtime);
+
+        const roomId = stringToUuid(
+            "twitter_generate_room-sage"
+        );
+
+        const state = await _runtime.composeState(
+            {
+                userId: _runtime.agentId,
+                roomId: roomId,
+                agentId: _runtime.agentId,
+                content: {
+                    text: randomTopic || "",
+                    action: "TWEET",
+                },
+            },
+            {
+                twitterUserName: "sage",
+            }
+        );
+        await generateNewTweetContentExtra(cleanData, _runtime, state);
+
+        if (1 === 1) {
+            return true;
+        }
+
         // Add handler logic for auto-training
-        const context = `Extract the search term from the user's message:
-        ${_message.content.text}
-        Only respond with the search term, do not include  any other text).
-        `;
+        // const context = `Extract the search term from the user's message:
+        // ${_message.content.text}
+        // Only respond with the search term, do not include  any other text).
+        // `;
+
+        const context = `Extract 1-3 keywords that you are currently interested in from the user's message:
+${_message.content.text}
+Only respond with the keywords, do not include any other text.
+`;
 
         const searchTerm = await generateText({
             context,
@@ -45,11 +102,13 @@ export const autoTrainingAction: Action = {
         const searchResults = await generateSerperSearch(searchTerm, _runtime);
         elizaLogger.info(`Search results: ${searchResults}`);
 
+
         const searchResultContent = `
 
         Summarize information from the query results: ${searchResults}, including your understanding of the topic and any important details.
         # response should be 1, 2, or 3 sentences etc.
         `;
+
         const searchResultsSummary = await generateText({
             context: searchResultContent,
             runtime: _runtime,
@@ -72,7 +131,7 @@ export const autoTrainingAction: Action = {
 
         await _runtime.messageManager.createMemory(newMemory);
 
-        await _runtime.evaluate(newMemory,_state);
+        await _runtime.evaluate(newMemory, _state);
 
         await _callback({text: searchResultsSummary});
 
@@ -163,40 +222,3 @@ export const autoTrainingAction: Action = {
     ] as ActionExample[][],
 } as Action;
 
-
-const generateSerperSearch = async (query: string, runtime: IAgentRuntime) => {
-    const apiUrl = "https://google.serper.dev/search";
-    const apiKey = runtime.getSetting("SERPER_API_KEY");
-
-    try {
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                'X-API-KEY': apiKey,
-            },
-            body: JSON.stringify({
-                "q": query,
-                "tbs": "qdr:d",
-            }),
-        });
-
-        if (!response.ok) {
-            throw new elizaLogger.error(
-                `HTTP error! status: ${response.status}`
-            );
-        }
-
-        const data = await response.json();
-        // const organicSimpleArray = data.organic.map((organic: any) => {
-        //     return {
-        //         title: organic.title,
-        //         snippet: organic.snippet
-        //     };
-        // });
-
-        return JSON.stringify(data);
-    } catch (error) {
-        elizaLogger.error("Error:", error);
-    }
-}

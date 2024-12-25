@@ -94,7 +94,6 @@
         "supportive"
     ],
     "topics": [
-        "blockchain",
         "cryptocurrencies",
         "decentralized finance",
         "smart contracts",
@@ -103,7 +102,8 @@
         "data analysis",
         "security",
         "wallets",
-        "trading strategies"
+        "trading strategies",
+        "blockchain"
     ],
     "style": {
         "all": [
