@@ -1,12 +1,12 @@
 import bodyParser from "body-parser";
 import cors from "cors";
-import express, { Request as ExpressRequest } from "express";
-import multer, { File } from "multer";
-import { elizaLogger, generateCaption, generateImage } from "@elizaos/core";
-import { composeContext } from "@elizaos/core";
-import { generateMessageResponse } from "@elizaos/core";
-import { messageCompletionFooter } from "@elizaos/core";
-import { AgentRuntime } from "@elizaos/core";
+import express, {Request as ExpressRequest} from "express";
+import multer, {File} from "multer";
+import {elizaLogger, generateCaption, generateImage} from "@elizaos/core";
+import {composeContext} from "@elizaos/core";
+import {generateMessageResponse} from "@elizaos/core";
+import {messageCompletionFooter} from "@elizaos/core";
+import {AgentRuntime} from "@elizaos/core";
 import {
     Content,
     Memory,
@@ -14,12 +14,14 @@ import {
     Client,
     IAgentRuntime,
 } from "@elizaos/core";
-import { stringToUuid } from "@elizaos/core";
-import { settings } from "@elizaos/core";
-import { createApiRouter } from "./api.ts";
+import {stringToUuid} from "@elizaos/core";
+import {settings} from "@elizaos/core";
+import {createApiRouter} from "./api.ts";
 import * as fs from "fs";
 import * as path from "path";
-const upload = multer({ storage: multer.memoryStorage() });
+import {creatPredictRouter} from "./biz/predictApi.ts";
+
+const upload = multer({storage: multer.memoryStorage()});
 
 export const messageHandlerTemplate =
     // {{goals}}
@@ -64,10 +66,13 @@ export class DirectClient {
         this.agents = new Map();
 
         this.app.use(bodyParser.json());
-        this.app.use(bodyParser.urlencoded({ extended: true }));
+        this.app.use(bodyParser.urlencoded({extended: true}));
 
         const apiRouter = createApiRouter(this.agents, this);
         this.app.use(apiRouter);
+
+        const predictRouter = creatPredictRouter();
+        this.app.use("/predict", predictRouter);
 
         // Define an interface that extends the Express Request interface
         interface CustomRequest extends ExpressRequest {
@@ -250,12 +255,12 @@ export class DirectClient {
                     return;
                 }
 
-                const images = await generateImage({ ...req.body }, agent);
+                const images = await generateImage({...req.body}, agent);
                 const imagesRes: { image: string; caption: string }[] = [];
                 if (images.data && images.data.length > 0) {
                     for (let i = 0; i < images.data.length; i++) {
                         const caption = await generateCaption(
-                            { imageUrl: images.data[i] },
+                            {imageUrl: images.data[i]},
                             agent
                         );
                         imagesRes.push({
@@ -264,7 +269,7 @@ export class DirectClient {
                         });
                     }
                 }
-                res.json({ images: imagesRes });
+                res.json({images: imagesRes});
             }
         );
 
@@ -308,7 +313,7 @@ export class DirectClient {
 
                 try {
                     console.log("Creating directory...");
-                    await fs.promises.mkdir(downloadDir, { recursive: true });
+                    await fs.promises.mkdir(downloadDir, {recursive: true});
 
                     console.log("Fetching file...");
                     const fileResponse = await fetch(

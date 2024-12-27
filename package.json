@@ -1,6 +1,7 @@
 {
     "name": "eliza",
     "scripts": {
+        "start-dev": "pnpm build && pnpm --filter \"@elizaos/agent\" start --isRoot --character=\"characters/predict.character.json\"",
         "preinstall": "npx only-allow pnpm",
         "build": "turbo run build --filter=!eliza-docs",
         "build-docker": "turbo run build",

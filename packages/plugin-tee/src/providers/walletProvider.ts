@@ -174,8 +174,11 @@ export class WalletProvider {
             }
             console.log("Cache miss for fetchPrices");
 
-            const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
-            const tokens = [SOL, BTC, ETH];
+            // const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
+            // const tokens = [SOL, BTC, ETH];
+
+            const { SOL } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
+            const tokens = [SOL];
             const prices: Prices = {
                 solana: { usd: "0" },
                 bitcoin: { usd: "0" },

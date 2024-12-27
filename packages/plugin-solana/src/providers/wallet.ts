@@ -1,4 +1,4 @@
-import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
+import {elizaLogger, IAgentRuntime, Memory, Provider, State} from "@elizaos/core";
 import { Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import NodeCache from "node-cache";
@@ -68,6 +68,7 @@ export class WalletProvider {
     ): Promise<any> {
         let lastError: Error;
 
+        elizaLogger.info(`Fetching data from ${url}`);
         for (let i = 0; i < PROVIDER_CONFIG.MAX_RETRIES; i++) {
             try {
                 const response = await fetch(url, {
@@ -270,39 +271,46 @@ export class WalletProvider {
                 return cachedValue;
             }
             console.log("Cache miss for fetchPrices");
-
-            const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
-            const tokens = [SOL, BTC, ETH];
+            //
+            // const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
+            // const tokens = [SOL, BTC, ETH];
+            const { SOL } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
+            const tokens = [SOL];
             const prices: Prices = {
                 solana: { usd: "0" },
                 bitcoin: { usd: "0" },
                 ethereum: { usd: "0" },
             };
 
-            for (const token of tokens) {
-                const response = await this.fetchWithRetry(
-                    runtime,
-                    `${PROVIDER_CONFIG.BIRDEYE_API}/defi/price?address=${token}`,
-                    {
-                        headers: {
-                            "x-chain": "solana",
-                        },
-                    }
-                );
-
-                if (response?.data?.value) {
-                    const price = response.data.value.toString();
-                    prices[
-                        token === SOL
-                            ? "solana"
-                            : token === BTC
-                              ? "bitcoin"
-                              : "ethereum"
-                    ].usd = price;
-                } else {
-                    console.warn(`No price data available for token: ${token}`);
-                }
-            }
+            // for (const token of tokens) {
+            //     const response = await this.fetchWithRetry(
+            //         runtime,
+            //         `${PROVIDER_CONFIG.BIRDEYE_API}/defi/price?address=${token}`,
+            //         {
+            //             headers: {
+            //                 "x-chain": "solana",
+            //             },
+            //         }
+            //     );
+            //
+            //     if (response?.data?.value) {
+            //         const price = response.data.value.toString();
+            //         // prices[
+            //         //     token === SOL
+            //         //         ? "solana"
+            //         //         : token === BTC
+            //         //           ? "bitcoin"
+            //         //           : "ethereum"
+            //         // ].usd = price;
+            //         prices[
+            //             token === SOL
+            //                 ? "solana"
+            //                 : "None"
+            //         ].usd = price;
+            //     } else {
+            //         console.warn(`No price data available for token: ${token}`);
+            //     }
+            // }
 
             this.cache.set(cacheKey, prices);
             return prices;
