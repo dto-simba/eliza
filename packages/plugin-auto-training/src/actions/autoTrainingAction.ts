@@ -41,51 +41,51 @@ export const autoTrainingAction: Action = {
         _callback: HandlerCallback
     ): Promise<void> => {
 
-
-        const topics = _runtime.character.topics.join(", ");
-
-        const randomTopic = await generateKeywordsBySearch(topics, _runtime);
-
-        elizaLogger.info(`Random topic: ${randomTopic}`);
-
-
-        const knowledge = await generateSerperSearch(randomTopic + " last news", _runtime);
-
-        elizaLogger.info(`Knowledge: ${knowledge}`);
-
-        const fullData = await feedKnowledgeToLargeModel(knowledge, _runtime);
-
-        const roomId = stringToUuid(
-            "twitter_generate_room-sage"
-        );
-
-        const state = await _runtime.composeState(
-            {
-                userId: _runtime.agentId,
-                roomId: roomId,
-                agentId: _runtime.agentId,
-                content: {
-                    text: randomTopic || "",
-                    action: "TWEET",
-                },
-            },
-            {
-                twitterUserName: "sage",
-            }
-        );
-       const newTweetContent = await generateNewTweetContentExtra(fullData, _runtime, state);
-
-        await _callback({text: `randomTopic: ${randomTopic}
-        ------------------------------------------------------------------
-         knowledge: ${knowledge}
-        ------------------------------------------------------------------
-         fullData: ${fullData}
-        ------------------------------------------------------------------
-         newTweetContent: ${newTweetContent}`});
-
-        if (1 === 1) {
-            return true;
-        }
+       //
+       //  const topics = _runtime.character.topics.join(", ");
+       //
+       //  const randomTopic = await generateKeywordsBySearch(topics, _runtime);
+       //
+       //  elizaLogger.info(`Random topic: ${randomTopic}`);
+       //
+       //
+       //  const knowledge = await generateSerperSearch(randomTopic + " last news", _runtime);
+       //
+       //  elizaLogger.info(`Knowledge: ${knowledge}`);
+       //
+       //  const fullData = await feedKnowledgeToLargeModel(knowledge, _runtime);
+       //
+       //  const roomId = stringToUuid(
+       //      "twitter_generate_room-sage"
+       //  );
+       //
+       //  const state = await _runtime.composeState(
+       //      {
+       //          userId: _runtime.agentId,
+       //          roomId: roomId,
+       //          agentId: _runtime.agentId,
+       //          content: {
+       //              text: randomTopic || "",
+       //              action: "TWEET",
+       //          },
+       //      },
+       //      {
+       //          twitterUserName: "sage",
+       //      }
+       //  );
+       // const newTweetContent = await generateNewTweetContentExtra(fullData, _runtime, state);
+       //
+       //  await _callback({text: `randomTopic: ${randomTopic}
+       //  ------------------------------------------------------------------
+       //   knowledge: ${knowledge}
+       //  ------------------------------------------------------------------
+       //   fullData: ${fullData}
+       //  ------------------------------------------------------------------
+       //   newTweetContent: ${newTweetContent}`});
+       //
+       //  if (1 === 1) {
+       //      return true;
+       //  }
 
         // Add handler logic for auto-training
         // const context = `Extract the search term from the user's message:
@@ -94,9 +94,9 @@ export const autoTrainingAction: Action = {
         // `;
 
         const context = `Extract 1-3 keywords that you are currently interested in from the user's message:
-${_message.content.text}
-Only respond with the keywords, do not include any other text.
-`;
+                                ${_message.content.text}
+                                Only respond with the keywords, do not include any other text.
+                                `;
 
         const searchTerm = await generateText({
             context,

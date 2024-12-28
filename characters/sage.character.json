@@ -1,7 +1,7 @@
 {
     "name": "Sage",
     "plugins": [],
-    "clients": ["twitter"],
+    "clients": [],
     "modelProvider": "openai",
     "settings": {
         "secrets": {},
@@ -94,6 +94,7 @@
         "supportive"
     ],
     "topics": [
+        "web3",
         "cryptocurrencies",
         "decentralized finance",
         "smart contracts",

@@ -47,8 +47,9 @@ export const feedKnowledgeToLargeModel = async (knowledge: string, runtime: IAge
 
     const context = `# Task: Extract knowledge from the API response and learn from it.
                             API Response: ${knowledge}
+                            Note: Only respond with the knowledge, do not include any other text.
                             Your learn from the API response.
-                            Your response not contain any api response keywords.`;
+                            Your response not contain any api,response…… etc keywords.`;
 
     const response = await generateText({
         context,
