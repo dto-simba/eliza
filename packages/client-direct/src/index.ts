@@ -133,119 +133,119 @@ export class DirectClient {
         //     }
         // );
 
-        // this.app.post(
-        //     "/:agentId/message",
-        //     async (req: express.Request, res: express.Response) => {
-        //         const agentId = req.params.agentId;
-        //         const roomId = stringToUuid(
-        //             req.body.roomId ?? "default-room-" + agentId
-        //         );
-        //         const userId = stringToUuid(req.body.userId ?? "user");
-        //
-        //         let runtime = this.agents.get(agentId);
-        //
-        //         // if runtime is null, look for runtime with the same name
-        //         if (!runtime) {
-        //             runtime = Array.from(this.agents.values()).find(
-        //                 (a) =>
-        //                     a.character.name.toLowerCase() ===
-        //                     agentId.toLowerCase()
-        //             );
-        //         }
-        //
-        //         if (!runtime) {
-        //             res.status(404).send("Agent not found");
-        //             return;
-        //         }
-        //
-        //         await runtime.ensureConnection(
-        //             userId,
-        //             roomId,
-        //             req.body.userName,
-        //             req.body.name,
-        //             "direct"
-        //         );
-        //
-        //         const text = req.body.text;
-        //         const messageId = stringToUuid(Date.now().toString());
-        //
-        //         const content: Content = {
-        //             text,
-        //             attachments: [],
-        //             source: "direct",
-        //             inReplyTo: undefined,
-        //         };
-        //
-        //         const userMessage = {
-        //             content,
-        //             userId,
-        //             roomId,
-        //             agentId: runtime.agentId,
-        //         };
-        //
-        //         const memory: Memory = {
-        //             id: messageId,
-        //             agentId: runtime.agentId,
-        //             userId,
-        //             roomId,
-        //             content,
-        //             createdAt: Date.now(),
-        //         };
-        //
-        //         await runtime.messageManager.createMemory(memory);
-        //
-        //         const state = await runtime.composeState(userMessage, {
-        //             agentName: runtime.character.name,
-        //         });
-        //
-        //         const context = composeContext({
-        //             state,
-        //             template: messageHandlerTemplate,
-        //         });
-        //
-        //         const response = await generateMessageResponse({
-        //             runtime: runtime,
-        //             context,
-        //             modelClass: ModelClass.LARGE,
-        //         });
-        //
-        //         // save response to memory
-        //         const responseMessage = {
-        //             ...userMessage,
-        //             userId: runtime.agentId,
-        //             content: response,
-        //         };
-        //
-        //         await runtime.messageManager.createMemory(responseMessage);
-        //
-        //         if (!response) {
-        //             res.status(500).send(
-        //                 "No response from generateMessageResponse"
-        //             );
-        //             return;
-        //         }
-        //
-        //         let message = null as Content | null;
-        //
-        //         await runtime.evaluate(memory, state);
-        //
-        //         const _result = await runtime.processActions(
-        //             memory,
-        //             [responseMessage],
-        //             state,
-        //             async (newMessages) => {
-        //                 message = newMessages;
-        //                 return [memory];
-        //             }
-        //         );
-        //
-        //         if (message) {
-        //             res.json([response, message]);
-        //         } else {
-        //             res.json([response]);
-        //         }
-        //     }
-        // );
+        this.app.post(
+            "/:agentId/message",
+            async (req: express.Request, res: express.Response) => {
+                const agentId = req.params.agentId;
+                const roomId = stringToUuid(
+                    req.body.roomId ?? "default-room-" + agentId
+                );
+                const userId = stringToUuid(req.body.userId ?? "user");
+
+                let runtime = this.agents.get(agentId);
+
+                // if runtime is null, look for runtime with the same name
+                if (!runtime) {
+                    runtime = Array.from(this.agents.values()).find(
+                        (a) =>
+                            a.character.name.toLowerCase() ===
+                            agentId.toLowerCase()
+                    );
+                }
+
+                if (!runtime) {
+                    res.status(404).send("Agent not found");
+                    return;
+                }
+
+                await runtime.ensureConnection(
+                    userId,
+                    roomId,
+                    req.body.userName,
+                    req.body.name,
+                    "direct"
+                );
+
+                const text = req.body.text;
+                const messageId = stringToUuid(Date.now().toString());
+
+                const content: Content = {
+                    text,
+                    attachments: [],
+                    source: "direct",
+                    inReplyTo: undefined,
+                };
+
+                const userMessage = {
+                    content,
+                    userId,
+                    roomId,
+                    agentId: runtime.agentId,
+                };
+
+                const memory: Memory = {
+                    id: messageId,
+                    agentId: runtime.agentId,
+                    userId,
+                    roomId,
+                    content,
+                    createdAt: Date.now(),
+                };
+
+                await runtime.messageManager.createMemory(memory);
+
+                const state = await runtime.composeState(userMessage, {
+                    agentName: runtime.character.name,
+                });
+
+                const context = composeContext({
+                    state,
+                    template: messageHandlerTemplate,
+                });
+
+                const response = await generateMessageResponse({
+                    runtime: runtime,
+                    context,
+                    modelClass: ModelClass.LARGE,
+                });
+
+                // save response to memory
+                const responseMessage = {
+                    ...userMessage,
+                    userId: runtime.agentId,
+                    content: response,
+                };
+
+                await runtime.messageManager.createMemory(responseMessage);
+
+                if (!response) {
+                    res.status(500).send(
+                        "No response from generateMessageResponse"
+                    );
+                    return;
+                }
+
+                let message = null as Content | null;
+
+                await runtime.evaluate(memory, state);
+
+                const _result = await runtime.processActions(
+                    memory,
+                    [responseMessage],
+                    state,
+                    async (newMessages) => {
+                        message = newMessages;
+                        return [memory];
+                    }
+                );
+
+                if (message) {
+                    res.json([response, message]);
+                } else {
+                    res.json([response]);
+                }
+            }
+        );
 
 
         this.app.get(
