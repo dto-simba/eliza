@@ -1032,6 +1032,14 @@ export interface IMemoryManager {
         end?: number;
     }): Promise<Memory[]>;
 
+    getMemoriesV2(opts: {
+        roomId: UUID;
+        count?: number;
+        unique?: boolean;
+        start?: number;
+        end?: number;
+    }): Promise<Memory[]>;
+
     getCachedEmbeddings(
         content: string
     ): Promise<{ embedding: number[]; levenshtein_score: number }[]>;
