@@ -1,7 +1,7 @@
 {
     "name": "eliza",
     "scripts": {
-        "start-dev": "pnpm --filter \"@elizaos/agent\" start --isRoot --characters=\"characters/dev.charater.json\"",
+        "start-dev": "turbo run build --filter=!eliza-docs && pnpm --filter \"@elizaos/agent\" start --isRoot --characters=\"characters/seilor.charater.json\"",
         "preinstall": "npx only-allow pnpm",
         "build": "turbo run build --filter=!eliza-docs",
         "build-docker": "turbo run build",
