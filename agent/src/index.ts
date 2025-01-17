@@ -62,7 +62,7 @@ import {TEEMode, teePlugin} from "@elizaos/plugin-tee";
 // import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
 // import { abstractPlugin } from "@elizaos/plugin-abstract";
 // import { avalanchePlugin } from "@elizaos/plugin-avalanche";
-// import { webSearchPlugin } from "@elizaos/plugin-web-search";
+import { webSearchPlugin } from "@elizaos/plugin-web-search";
 // import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
 import scorePlugin from "@elizaos/plugin-score";
 import Database from "better-sqlite3";
@@ -530,7 +530,8 @@ export async function createAgent(
             //     ? confluxPlugin
             //     : null,
             nodePlugin,
-            // getSecret(character, "TAVILY_API_KEY") ? webSearchPlugin : null,
+            scorePlugin,
+            getSecret(character, "TAVILY_API_KEY") ? webSearchPlugin : null,
             // getSecret(character, "SOLANA_PUBLIC_KEY") ||
             // (getSecret(character, "WALLET_PUBLIC_KEY") &&
             //     !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
@@ -610,7 +611,6 @@ export async function createAgent(
             // getSecret(character, "ECHOCHAMBERS_API_KEY")
             //     ? echoChamberPlugin
             //     : null,
-            scorePlugin,
             // teePlugin,
         ].filter(Boolean),
         providers: [],
