@@ -9,12 +9,15 @@ import {
     State
 } from "@elizaos/core";
 import {RetBiz, SampleToken} from "../types.ts";
+import {generateReplyText, ReplyType} from "../service/generateReplyService.ts";
 
 interface QueryUserProofResponse {
     userAddress: string;
     leafKey: string;
     leafProof: string;
+    lootBoxContractAddress?: string;
 }
+
 export const openLootBoxAction: Action = {
     name: "OPEN_LOOT_BOX",
     description: "Open a loot box",
@@ -34,12 +37,19 @@ export const openLootBoxAction: Action = {
 
         try {
             if (userAddress && userAddress.length > 0) {
-                await actionOpenLootBox(userAddress, runtime, callback);
-            }else{
+                await actionOpenLootBox(runtime, state, callback, userAddress);
+            } else {
                 elizaLogger.error("Invalid user address.");
                 if (callback) {
+                    const replyText = await generateReplyText(
+                        runtime,
+                        state,
+                        `Open loot box failed. Error details: Invalid user address.`,
+                        ReplyType.ERROR
+                    );
                     callback({
-                        text: "Invalid your address.",
+                        user: state.agentName,
+                        text: replyText,
                         content: {error: "Invalid your address."},
                     });
                 }
@@ -47,10 +57,17 @@ export const openLootBoxAction: Action = {
             }
 
         } catch (error) {
-            elizaLogger.error("Failed to query my faith points:", error);
+            elizaLogger.error("Open loot box failed:", error);
             if (callback) {
+                const replyText = await generateReplyText(
+                    runtime,
+                    state,
+                    `Open loot box failed. Unexpected error. Error details: ${error.message}`,
+                    ReplyType.ERROR
+                );
                 callback({
-                    text: "Failed to query your faith points.",
+                    user: state.agentName,
+                    text: replyText,
                     content: {error: error.message},
                 });
             }
@@ -61,7 +78,8 @@ export const openLootBoxAction: Action = {
     validate: async (runtime: IAgentRuntime) => {
         const baseUrl = !!runtime.getSetting("WEB3_BASE_URL");
         const chainId = !!runtime.getSetting("WEB3_SUPPORT_CHAIN_ID");
-        return baseUrl && chainId;
+        const lootBoxAddress = !!runtime.getSetting("LOOT_BOX_CONTRACT_ADDRESS");
+        return baseUrl && chainId && lootBoxAddress;
     },
     examples: [
         [
@@ -133,10 +151,10 @@ export const openLootBoxAction: Action = {
 };
 
 
-const actionOpenLootBox = async (userAddress: string, runtime: IAgentRuntime, callback: HandlerCallback) => {
+const actionOpenLootBox = async (runtime: IAgentRuntime, state: State, callback: HandlerCallback, userAddress: string) => {
 
     const baseUrl = runtime.getSetting("WEB3_BASE_URL");
-    const chainId = runtime.getSetting("WEB3_SUPPORT_CHAIN_ID");
+    const lootBoxContractAddress = runtime.getSetting("LOOT_BOX_CONTRACT_ADDRESS");
 
     const url = `${baseUrl}/api/agent/findUserProof/${userAddress}`;
     const response = await fetch(url, {
@@ -148,12 +166,20 @@ const actionOpenLootBox = async (userAddress: string, runtime: IAgentRuntime, ca
     const bizRet = await response.json() as RetBiz;
     if (bizRet.status === 1) {
         const userProofResponse = bizRet.result as QueryUserProofResponse;
+        userProofResponse.lootBoxContractAddress = lootBoxContractAddress;
         if (callback) {
+            const replyText = await generateReplyText(
+                runtime,
+                state,
+                `Now you can open your loot box.`,
+                ReplyType.NORMAL
+            );
             callback({
-                text: `Here is your loot box.`,
+                user: state.agentName,
+                text: replyText,
                 webAction: {
                     step: "openLootBoxStep",
-                    details:userProofResponse
+                    details: userProofResponse
                 }
             }, []);
         }
@@ -161,8 +187,15 @@ const actionOpenLootBox = async (userAddress: string, runtime: IAgentRuntime, ca
     } else {
         elizaLogger.error(`The address(${userAddress}) loot box is not found.`);
         if (callback) {
+            const replyText = await generateReplyText(
+                runtime,
+                state,
+                `Connect web error. Error details: ${bizRet.error}`,
+                ReplyType.ERROR
+            );
             callback({
-                text: `The  address(${userAddress}) loot box is not found.`,
+                user: state.agentName,
+                text: replyText,
                 content: {error: bizRet.error},
             }, []);
         }

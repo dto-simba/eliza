@@ -1,14 +1,13 @@
 import {
     Action,
-    composeContext,
-    Content, elizaLogger,
-    generateObject,
+    elizaLogger,
     HandlerCallback,
     IAgentRuntime,
-    Memory, ModelClass,
+    Memory,
     State
 } from "@elizaos/core";
-import {RetBiz, SampleToken} from "../types.ts";
+import {RetBiz} from "../types.ts";
+import {generateReplyText, ReplyType} from "../service/generateReplyService.ts";
 
 interface QueryUserPointsResponse {
     chainId: number;
@@ -17,6 +16,7 @@ interface QueryUserPointsResponse {
     basePoints: number;
     gamePoints: number;
 }
+
 export const queryPointsAction: Action = {
     name: "QUERY_POINTS",
     description: "Query points for a user",
@@ -36,12 +36,19 @@ export const queryPointsAction: Action = {
 
         try {
             if (userAddress && userAddress.length > 0) {
-                await actionQueryPoint(userAddress, runtime, callback);
-            }else{
+                await actionQueryPoint(runtime, state, callback, userAddress);
+            } else {
                 elizaLogger.error("Invalid user address.");
                 if (callback) {
+                    const replyText = await generateReplyText(
+                        runtime,
+                        state,
+                        `Query points failed. Error details: Invalid user address.`,
+                        ReplyType.ERROR
+                    );
                     callback({
-                        text: "Invalid your address.",
+                        user: state.agentName,
+                        text: replyText,
                         content: {error: "Invalid your address."},
                     });
                 }
@@ -49,10 +56,17 @@ export const queryPointsAction: Action = {
             }
 
         } catch (error) {
-            elizaLogger.error("Failed to query my faith points:", error);
+            elizaLogger.error("Failed to query my faith points:", error.message);
             if (callback) {
+                const replyText = await generateReplyText(
+                    runtime,
+                    state,
+                    `Query points failed. Unexpected error. Error details: ${error.message}`,
+                    ReplyType.ERROR
+                );
                 callback({
-                    text: "Failed to query your faith points.",
+                    user: state.agentName,
+                    text: replyText,
                     content: {error: error.message},
                 });
             }
@@ -108,7 +122,7 @@ export const queryPointsAction: Action = {
 };
 
 
-const actionQueryPoint = async (userAddress: string, runtime: IAgentRuntime, callback: HandlerCallback) => {
+const actionQueryPoint = async (runtime: IAgentRuntime, state: State, callback: HandlerCallback, userAddress: string) => {
 
     const baseUrl = runtime.getSetting("WEB3_BASE_URL");
     const chainId = runtime.getSetting("WEB3_SUPPORT_CHAIN_ID");
@@ -124,20 +138,34 @@ const actionQueryPoint = async (userAddress: string, runtime: IAgentRuntime, cal
     if (bizRet.status === 1) {
         const pointsResponse = bizRet.result as QueryUserPointsResponse;
         if (callback) {
+            const replyText = await generateReplyText(
+                runtime,
+                state,
+                `The address(${userAddress}) faith points is found. The total points is ${pointsResponse.userPoints}.`,
+                ReplyType.NORMAL
+            );
             callback({
-                text: `The address(${userAddress}) faith points is found. The total points is ${pointsResponse.userPoints}.`,
+                user: state.agentName,
+                text: replyText,
                 webAction: {
                     step: "queryFaithPointsStep",
-                    details:pointsResponse
+                    details: pointsResponse
                 }
             }, []);
         }
         return true;
     } else {
-        elizaLogger.error(`The address(${userAddress}) faith points is not found.`);
+        elizaLogger.error(`Fetch user points error. Error info: ${bizRet.error}`);
         if (callback) {
+            const replyText = await generateReplyText(
+                runtime,
+                state,
+                `Connect web error. Error details: ${bizRet.error}`,
+                ReplyType.ERROR
+            );
             callback({
-                text: `The  address(${userAddress}) faith points is not found.`,
+                user: state.agentName,
+                text: replyText,
                 content: {error: bizRet.error},
             }, []);
         }

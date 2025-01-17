@@ -10,6 +10,7 @@ import {
 } from "@elizaos/core";
 import {RetBiz, SampleToken} from "../types.ts";
 import {z} from "zod";
+import {generateReplyText, ReplyType} from "../service/generateReplyService.ts";
 
 
 interface SendTokenContent extends Content {
@@ -103,8 +104,15 @@ export const sendTokenAction: Action = {
         if (!isSendTokenContent(content)) {
             elizaLogger.error("Invalid content for SEND_TOKEN action.");
             if (callback) {
+                const replyText = await generateReplyText(
+                    runtime,
+                    state,
+                    `Unable to process send token request. Invalid content provided.`,
+                    ReplyType.ERROR
+                );
                 callback({
-                    text: "Unable to process send token request. Invalid content provided.",
+                    user: state.agentName,
+                    text: replyText,
                     content: {error: "Invalid send token content"},
                 });
             }
@@ -112,13 +120,20 @@ export const sendTokenAction: Action = {
         }
 
         try {
-            await actionTokenBySymbol(content, runtime, callback);
+            await actionTokenBySymbol(runtime, state, callback, content);
 
         } catch (error) {
             elizaLogger.error("Failed to send token:", error);
+            const replyText = await generateReplyText(
+                runtime,
+                state,
+                `Send token failed. Unexpected error. Error details: ${error.message}`,
+                ReplyType.ERROR
+            );
             if (callback) {
                 callback({
-                    text: "Failed to send token.",
+                    user: state.agentName,
+                    text: replyText,
                     content: {error: error.message},
                 });
             }
@@ -155,14 +170,15 @@ export const sendTokenAction: Action = {
 };
 
 
-const actionTokenBySymbol = async (sendTokenContent: SendTokenContent,
-                                   runtime: IAgentRuntime,
-                                   callback: HandlerCallback) => {
+const actionTokenBySymbol = async (runtime: IAgentRuntime,
+                                   state: State,
+                                   callback: HandlerCallback,
+                                   sendTokenContent: SendTokenContent,) => {
 
     const baseUrl = runtime.getSetting("WEB3_BASE_URL");
     const chainId = runtime.getSetting("WEB3_SUPPORT_CHAIN_ID");
     let symbol = sendTokenContent.tokenSymbol;
-    if(symbol.startsWith("$")){
+    if (symbol.startsWith("$")) {
         symbol = symbol.slice(1);
     }
     const url = `${baseUrl}/api/agent/findTokenBySymbol/${chainId}/${symbol}`;
@@ -177,8 +193,15 @@ const actionTokenBySymbol = async (sendTokenContent: SendTokenContent,
         const sampleToken = bizRet.result as SampleToken;
         if (callback) {
             sendTokenContent.token = sampleToken;
+            const replyText = await generateReplyText(
+                runtime,
+                state,
+                `I find the token with address ${sampleToken.address}(${sampleToken.symbol}).`,
+                ReplyType.NORMAL
+            );
             callback({
-                text: `The token with address ${sampleToken.address} is ${sampleToken.name}(${sampleToken.symbol})`,
+                user: state.agentName,
+                text: replyText,
                 webAction: {
                     step: "sendTokenStep",
                     details: sendTokenContent
@@ -189,8 +212,15 @@ const actionTokenBySymbol = async (sendTokenContent: SendTokenContent,
     } else {
         elizaLogger.error(`The token(${symbol}) is not found.`);
         if (callback) {
+            const replyText = await generateReplyText(
+                runtime,
+                state,
+                `Connect web error. Error details: ${bizRet.error}`,
+                ReplyType.ERROR
+            );
             callback({
-                text: `The token(${symbol}) is not found.`,
+                user: state.agentName,
+                text: replyText,
                 content: {error: bizRet.error},
             }, []);
         }

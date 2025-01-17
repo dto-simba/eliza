@@ -10,6 +10,7 @@ import {
 } from "@elizaos/core";
 import {RetBiz, SampleToken} from "../types.ts";
 import {z} from "zod";
+import {generateReplyText, ReplyType} from "../service/generateReplyService.ts";
 
 export interface FindSwapTokensParams {
     chainId?: number | string;
@@ -20,7 +21,7 @@ export interface FindSwapTokensParams {
 }
 
 export interface FindSwapTokensResult {
-    pairAddress: string;
+    routerAddress: string;
     routerTokens: SampleToken[];
 }
 
@@ -114,8 +115,15 @@ export const swapTokenAction: Action = {
         if (!isSwapTokenContent(content)) {
             elizaLogger.error("Invalid content for SWAP_TOKEN action.");
             if (callback) {
+                const replyText = await generateReplyText(
+                    runtime,
+                    state,
+                    `Unable to process send token request. Invalid content provided.`,
+                    ReplyType.ERROR
+                );
                 callback({
-                    text: "Unable to process send token request. Invalid content provided.",
+                    user: state.agentName,
+                    text: replyText,
                     content: {error: "Invalid swap token content"},
                 });
             }
@@ -123,13 +131,20 @@ export const swapTokenAction: Action = {
         }
 
         try {
-            await actionFindPairInfo(content, runtime, callback);
+            await actionFindPairInfo(runtime, state, callback, content);
 
         } catch (error) {
             elizaLogger.error("Failed to swap token:", error);
             if (callback) {
+                const replyText = await generateReplyText(
+                    runtime,
+                    state,
+                    `Swap token failed. Please try again later. If the problem persists, please contact the support team now. Unexpected error. Error details: ${error.message}`,
+                    ReplyType.ERROR
+                );
                 callback({
-                    text: "Failed to swap token.",
+                    user: state.agentName,
+                    text: replyText,
                     content: {error: error.message},
                 });
             }
@@ -157,9 +172,11 @@ export const swapTokenAction: Action = {
 };
 
 
-const actionFindPairInfo = async (swapTokenContent: SwapTokenContent,
-                                   runtime: IAgentRuntime,
-                                   callback: HandlerCallback) => {
+const actionFindPairInfo = async (
+    runtime: IAgentRuntime,
+    state: State,
+    callback: HandlerCallback,
+    swapTokenContent: SwapTokenContent) => {
 
     const baseUrl = runtime.getSetting("WEB3_BASE_URL");
     const chainId = runtime.getSetting("WEB3_SUPPORT_CHAIN_ID");
@@ -183,8 +200,15 @@ const actionFindPairInfo = async (swapTokenContent: SwapTokenContent,
         const swapTokensResult = bizRet.result as FindSwapTokensResult;
         swapTokenContent.pairInfo = swapTokensResult;
         if (callback) {
+            const replyText = await generateReplyText(
+                runtime,
+                state,
+                `The swap router is found, the router address is ${swapTokensResult.routerAddress}`,
+                ReplyType.NORMAL
+            );
             callback({
-                text: `The token pair is found, the pair address is ${swapTokensResult.pairAddress}`,
+                user: state.agentName,
+                text: replyText,
                 webAction: {
                     step: "swapTokenStep",
                     details: swapTokenContent,
@@ -195,8 +219,15 @@ const actionFindPairInfo = async (swapTokenContent: SwapTokenContent,
     } else {
         elizaLogger.error(`The token pair(${swapTokenContent.fromTokenSymbol} to ${swapTokenContent.toTokenSymbol}) is not found.`);
         if (callback) {
+            const replyText = await generateReplyText(
+                runtime,
+                state,
+                `Connect web error. Error details: ${bizRet.error}`,
+                ReplyType.ERROR
+            );
             callback({
-                text: `The token pair(${swapTokenContent.fromTokenSymbol} to ${swapTokenContent.toTokenSymbol}) is not found.`,
+                user: state.agentName,
+                text: replyText,
                 content: {error: bizRet.error},
             }, []);
         }
