@@ -12,13 +12,6 @@ import {RetBiz, SampleToken} from "../types.ts";
 import {z} from "zod";
 
 
-export interface SampleToken {
-    chainId: number;
-    symbol: string;
-    name: string;
-    address: string;
-    decimals: number;
-}
 interface SendTokenContent extends Content {
     amount: string | number;
     tokenSymbol: string;
@@ -106,7 +99,6 @@ export const sendTokenAction: Action = {
         ).object as SendTokenContent;
 
 
-        elizaLogger.info("Send token content:", content);
         //Validate send token content
         if (!isSendTokenContent(content)) {
             elizaLogger.error("Invalid content for SEND_TOKEN action.");
@@ -148,6 +140,8 @@ export const sendTokenAction: Action = {
                     action: "SEND_TOKEN",
                 },
             },
+        ],
+        [
             {
                 user: "{{user1}}",
                 content: {
@@ -155,7 +149,7 @@ export const sendTokenAction: Action = {
                     action: "SEND_TOKEN",
                 },
             },
-        ],
+        ]
     ],
     similes: ["SEND_TOKENS", "TOKEN_TRANSFER", "MOVE_TOKEN"],
 };

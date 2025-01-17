@@ -16,7 +16,7 @@ export interface FindSwapTokensParams {
     swapDexType?: string;
     fromTokenSymbol: string;
     toTokenSymbol: string;
-    amount: number;
+    amount: number | string;
 }
 
 export interface FindSwapTokensResult {
