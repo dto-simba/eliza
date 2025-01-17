@@ -203,7 +203,7 @@ const actionFindPairInfo = async (
             const replyText = await generateReplyText(
                 runtime,
                 state,
-                `The swap router is found, the router address is ${swapTokensResult.routerAddress}`,
+                `The swap router is found,you can swap now.`,
                 ReplyType.NORMAL
             );
             callback({

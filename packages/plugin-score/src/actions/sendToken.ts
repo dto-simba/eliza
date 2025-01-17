@@ -196,7 +196,7 @@ const actionTokenBySymbol = async (runtime: IAgentRuntime,
             const replyText = await generateReplyText(
                 runtime,
                 state,
-                `I find the token with address ${sampleToken.address}(${sampleToken.symbol}).`,
+                `Find the token(${sampleToken.symbol}) successfully,you can send token now.`,
                 ReplyType.NORMAL
             );
             callback({
