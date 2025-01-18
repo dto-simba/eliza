@@ -30,5 +30,6 @@ export interface SampleToken {
     name: string;
     address: string;
     decimals: number;
+    isNativeCoin?: boolean;
 }
 
