@@ -9,9 +9,9 @@ import {
     validateCharacterConfig,
 } from "@elizaos/core";
 
-import { REST, Routes } from "discord.js";
-import { DirectClient } from ".";
-import { stringToUuid } from "@elizaos/core";
+import {REST, Routes} from "discord.js";
+import {DirectClient} from ".";
+import {stringToUuid} from "@elizaos/core";
 
 export function createApiRouter(
     agents: Map<string, AgentRuntime>,
@@ -21,7 +21,7 @@ export function createApiRouter(
 
     router.use(cors());
     router.use(bodyParser.json());
-    router.use(bodyParser.urlencoded({ extended: true }));
+    router.use(bodyParser.urlencoded({extended: true}));
     router.use(
         express.json({
             limit: getEnvVariable("EXPRESS_MAX_PAYLOAD") || "100kb",
@@ -33,7 +33,7 @@ export function createApiRouter(
     });
 
     router.get("/hello", (req, res) => {
-        res.json({ message: "Hello World!" });
+        res.json({message: "Hello World!"});
     });
 
     router.get("/agents", (req, res) => {
@@ -42,7 +42,7 @@ export function createApiRouter(
             name: agent.character.name,
             clients: Object.keys(agent.clients),
         }));
-        res.json({ agents: agentsList });
+        res.json({agents: agentsList});
     });
 
     router.get("/agents/:agentId", (req, res) => {
@@ -50,7 +50,7 @@ export function createApiRouter(
         const agent = agents.get(agentId);
 
         if (!agent) {
-            res.status(404).json({ error: "Agent not found" });
+            res.status(404).json({error: "Agent not found"});
             return;
         }
 
@@ -101,12 +101,12 @@ export function createApiRouter(
         const runtime = agents.get(agentId);
 
         if (!runtime) {
-            res.status(404).json({ error: "Runtime not found" });
+            res.status(404).json({error: "Runtime not found"});
             return;
         }
 
         const API_TOKEN = runtime.getSetting("DISCORD_API_TOKEN") as string;
-        const rest = new REST({ version: "10" }).setToken(API_TOKEN);
+        const rest = new REST({version: "10"}).setToken(API_TOKEN);
 
         try {
             const guilds = (await rest.get(Routes.userGuilds())) as Array<any>;
@@ -118,7 +118,7 @@ export function createApiRouter(
             });
         } catch (error) {
             console.error("Error fetching guilds:", error);
-            res.status(500).json({ error: "Failed to fetch guilds" });
+            res.status(500).json({error: "Failed to fetch guilds"});
         }
     });
 
@@ -179,7 +179,7 @@ export function createApiRouter(
             res.json(response);
         } catch (error) {
             console.error("Error fetching memories:", error);
-            res.status(500).json({ error: "Failed to fetch memories" });
+            res.status(500).json({error: "Failed to fetch memories"});
         }
     });
 
@@ -200,13 +200,19 @@ export function createApiRouter(
             return;
         }
 
-        const opts ={
+        const opts: {
+            roomId: UUID;
+            count?: number;
+            unique?: boolean;
+            start?: number;
+            end?: number;
+        } = {
             roomId: roomId,
         }
 
         if (req.query.count) {
             opts.count = Number(req.query.count);
-            if(opts.count > 100) {
+            if (opts.count > 100) {
                 opts.count = 100;
             }
         }
@@ -238,7 +244,7 @@ export function createApiRouter(
             res.json(response);
         } catch (error) {
             console.error("Error fetching user room history messages:", error);
-            res.status(500).json({ error: "Failed to fetch user room history messages" });
+            res.status(500).json({error: "Failed to fetch user room history messages"});
         }
     });
 
