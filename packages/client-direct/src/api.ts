@@ -8,7 +8,7 @@ import {
     getEnvVariable,
     UUID,
     validateCharacterConfig,
-    ServiceType,
+    ServiceType, stringToUuid,
 } from "@elizaos/core";
 
 import { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
@@ -329,11 +329,9 @@ export function createApiRouter(
     );
 
     router.get("/agents/:agentId/:roomId/messageHistory", async (req, res) => {
-        const { agentId, roomId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-            roomId: null,
-        };
-        if (!agentId || !roomId) return;
+        const agentId = req.params.agentId;
+        const roomId = stringToUuid(req.params.roomId);
+
         let runtime = agents.get(agentId);
 
         // if runtime is null, look for runtime with the same name
