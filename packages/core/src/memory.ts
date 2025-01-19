@@ -107,6 +107,29 @@ export class MemoryManager implements IMemoryManager {
             end,
         });
     }
+    async getMemoriesV2({
+        roomId,
+        count = 10,
+        unique,
+        start,
+        end,
+    }: {
+        roomId: UUID;
+        count?: number;
+        unique?: boolean;
+        start?: number;
+        end?: number;
+    }): Promise<Memory[]> {
+        return await this.runtime.databaseAdapter.getMemories({
+            roomId,
+            count,
+            unique,
+            tableName: this.tableName,
+            agentId: this.runtime.agentId,
+            start,
+            end,
+        });
+    }
 
     async getCachedEmbeddings(content: string): Promise<
         {

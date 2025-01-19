@@ -1733,15 +1733,41 @@ export const generateWebSearch = async (
         if (!apiKey) {
             throw new Error("TAVILY_API_KEY is not set");
         }
-        const tvly = tavily({ apiKey });
-        const response = await tvly.search(query, {
-            includeAnswer: true,
-            maxResults: 3, // 5 (default)
-            topic: "general", // "general"(default) "news"
-            searchDepth: "basic", // "basic"(default) "advanced"
-            includeImages: false, // false (default) true
-        });
-        return response;
+        // const tvly = tavily({ apiKey });
+        // const response = await tvly.search(query, {
+        //     includeAnswer: true,
+        //     maxResults: 3, // 5 (default)
+        //     topic: "general", // "general"(default) "news"
+        //     searchDepth: "basic", // "basic"(default) "advanced"
+        //     includeImages: false, // false (default) true
+        //     includeRawContent: false, // false (default) true
+        //     includeImageDescriptions: false, // false (default) true
+        //     includeDomains : [], // false (default) true
+        // });
+        // return response;
+        const response = await fetch(
+            "https://api.tavily.com/search",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    api_key: apiKey,
+                    query,
+                    max_results: 3,
+                    include_answer: true,
+                    topic: "general",
+                    search_depth: "basic",
+                    include_images: false,
+                    include_raw_content: false,
+                    include_image_descriptions: false,
+                    include_domains: [],
+                }),
+            });
+        const responseJson = await response.json();
+        return responseJson as SearchResponse;
     } catch (error) {
         elizaLogger.error("Error:", error);
     }

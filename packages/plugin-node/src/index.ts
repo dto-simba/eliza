@@ -11,7 +11,7 @@ import {
     PdfService,
     SpeechService,
     TranscriptionService,
-    VideoService,
+    // VideoService,
 } from "./services/index.ts";
 
 export type NodePlugin = ReturnType<typeof createNodePlugin>;
@@ -27,7 +27,7 @@ export function createNodePlugin() {
             new PdfService(),
             new SpeechService(),
             new TranscriptionService(),
-            new VideoService(),
+            // new VideoService(),
             new AwsS3Service(),
         ],
         actions: [describeImage],

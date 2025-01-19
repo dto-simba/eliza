@@ -328,5 +328,73 @@ export function createApiRouter(
         }
     );
 
+    router.get("/agents/:agentId/:roomId/messageHistory", async (req, res) => {
+        const { agentId, roomId } = validateUUIDParams(req.params, res) ?? {
+            agentId: null,
+            roomId: null,
+        };
+        if (!agentId || !roomId) return;
+        let runtime = agents.get(agentId);
+
+        // if runtime is null, look for runtime with the same name
+        if (!runtime) {
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            res.status(404).send("Agent not found");
+            return;
+        }
+
+        const opts: {
+            roomId: UUID;
+            count?: number;
+            unique?: boolean;
+            start?: number;
+            end?: number;
+        } = {
+            roomId: roomId,
+        }
+
+        if (req.query.count) {
+            opts.count = Number(req.query.count);
+            if (opts.count > 100) {
+                opts.count = 100;
+            }
+        }
+        if (req.query.unique) {
+            opts.unique = req.query.unique === "true";
+        }
+        if (req.query.start) {
+            opts.start = Number(req.query.start);
+        }
+        if (req.query.end) {
+            opts.end = Number(req.query.end);
+        }
+        try {
+            const memories = await runtime.messageManager.getMemoriesV2(opts);
+            const response = {
+                agentId,
+                roomId,
+                messageHistory: memories.map((memory) => ({
+                    id: memory.id,
+                    userId: memory.userId,
+                    createdAt: memory.createdAt,
+                    content: {
+                        text: memory.content.text,
+                        user: memory.content?.user
+                    }
+                })),
+            };
+
+            res.json(response);
+        } catch (error) {
+            console.error("Error fetching user room history messages:", error);
+            res.status(500).json({error: "Failed to fetch user room history messages"});
+        }
+    });
+
     return router;
 }

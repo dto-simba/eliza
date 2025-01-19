@@ -218,12 +218,6 @@ export class DirectClient {
                 );
 
                 const text = req.body.text;
-                // if empty text, directly return
-                if (!text) {
-                    res.json([]);
-                    return;
-                }
-
                 const messageId = stringToUuid(Date.now().toString());
 
                 const attachments: Media[] = [];
@@ -274,6 +268,7 @@ export class DirectClient {
 
                 let state = await runtime.composeState(userMessage, {
                     agentName: runtime.character.name,
+                    userAddress: req.body.userAddress,
                 });
 
                 const context = composeContext({
