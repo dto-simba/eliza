@@ -73,7 +73,9 @@ export function isSwapTokenContent(content: SwapTokenContent): content is SwapTo
     // Validate addresses
     const validAddresses =
         content.fromTokenSymbol.length > 1 &&
-        content.toTokenSymbol.length > 1;
+        content.toTokenSymbol.length > 1 &&
+        content.amount.toString().length > 0
+    ;
 
     return validAddresses;
 }
@@ -105,11 +107,10 @@ export const swapTokenAction: Action = {
         const content = (await generateObject({
                 runtime,
                 context: swapTokenContentStr,
-                modelClass: ModelClass.SMALL,
+                modelClass: ModelClass.LARGE,
                 schema: SwapTokenSchema,
             })
         ).object as SwapTokenContent;
-
 
         //Validate send token content
         if (!isSwapTokenContent(content)) {
