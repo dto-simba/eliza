@@ -7,10 +7,13 @@ export enum ReplyType {
 }
 
 const replyTemplate = `Based on this message: "{{replyMsg}}", generate a reply to the user.
-Keep the response short and specific.`;
+Keep the response short and specific.
+`;
 
 const errorReplyTemplate = `Based on this message: "{{replyMsg}}", generate an error reply to the user.
-You can make a joke or say something funny.`;
+You can make a joke or say something funny.
+Not include any team information or personal information.
+Do not collect any user information or data.`;
 
 export async function generateReplyText(
     runtime: IAgentRuntime,
